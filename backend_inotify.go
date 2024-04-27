@@ -718,9 +718,9 @@ func (w *Watcher) newEvent(name string, mask, cookie uint32) Event {
 			if recurse {
 				err := w.AddWith(filepath.Join(name, "..."), withCreate())
 				if err != nil {
-					// TODO: not sure if this has a nice error message.
-					//       Also, this path could have been removed by now;
-					//       should probably filter ENOENT or something.
+					// TODO: not sure if this has a nice error message. Also,
+					// this path could have been removed by now; should probably
+					// filter ENOENT or something.
 					w.sendError(err)
 				}
 			}
@@ -753,6 +753,7 @@ func (w *Watcher) newEvent(name string, mask, cookie uint32) Event {
 	}
 	if mask&unix.IN_MOVE_SELF == unix.IN_MOVE_SELF {
 		// Ignore when moving "self" for recursive watches, but add new watch.
+		//
 		// TODO: we should really use the "cookie" from inotify to properly deal
 		// with renames.
 		if w.isRecursive(name) {

@@ -24,3 +24,7 @@ Output:
 		create     /sub-rename/file      # touch /sub-rename/file
 
 		create     /sub-rename/dir/file  # touch /sub-rename/dir/file
+
+# IN_ISDIR | IN_MOVED_FROM   → "/tmp/TestScriptwatch-recurserename-dir3536106279/001/sub"
+# IN_ISDIR | IN_MOVED_TO     → "/tmp/TestScriptwatch-recurserename-dir3536106279/001/sub-rename"
+# IN_MOVE_SELF               → "/tmp/TestScriptwatch-recurserename-dir3536106279/001/sub"

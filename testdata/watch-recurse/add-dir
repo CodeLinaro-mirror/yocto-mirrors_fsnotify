@@ -38,4 +38,3 @@ Output:
 
 		create   /sub/dir/newdir/file
 		write    /sub/dir/newdir/file
-
