@@ -644,7 +644,7 @@ func isSolaris() bool {
 
 func supportsRecurse(t *testing.T) {
 	switch runtime.GOOS {
-	case "windows":
+	case "windows", "linux":
 		// Run test.
 	default:
 		t.Skip("recursion not yet supported on " + runtime.GOOS)

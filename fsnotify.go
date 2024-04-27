@@ -121,6 +121,10 @@ var (
 	// ErrClosed is used when trying to operate on a closed Watcher.
 	ErrClosed = errors.New("fsnotify: watcher already closed")
 
+	// ErrNotDirectory is used when an operation that only works on a directory
+	// is used on a directory.
+	ErrNotDirectory = errors.New("fsnotify: not a directory")
+
 	// ErrEventOverflow is reported from the Errors channel when there are too
 	// many events:
 	//
@@ -188,9 +192,10 @@ func (e Event) String() string {
 type (
 	addOpt   func(opt *withOpts)
 	withOpts struct {
-		bufsize  int
-		op       Op
-		noFollow bool
+		bufsize    int
+		op         Op
+		noFollow   bool
+		sendCreate bool
 	}
 )
 
@@ -254,11 +259,17 @@ func withNoFollow() addOpt {
 	return func(opt *withOpts) { opt.noFollow = true }
 }
 
+// "Internal" option for recursive watches on inotify.
+func withCreate() addOpt {
+	return func(opt *withOpts) { opt.sendCreate = true }
+}
+
 var enableRecurse = false
 
 // Check if this path is recursive (ends with "/..." or "\..."), and return the
 // path with the /... stripped.
 func recursivePath(path string) (string, bool) {
+	path = filepath.Clean(path)
 	if !enableRecurse { // Only enabled in tests for now.
 		return path, false
 	}

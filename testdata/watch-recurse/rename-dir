@@ -16,3 +16,11 @@ Output:
 	create     /sub-rename/file
 
 	create     /sub-rename/dir/file  # touch /sub-rename/dir/file
+
+	linux:  # Same as Windows, but without those stupid dir writes Windows sends.
+		rename     /sub                  # mv /sub /sub-rename
+		create     /sub-rename
+
+		create     /sub-rename/file      # touch /sub-rename/file
+
+		create     /sub-rename/dir/file  # touch /sub-rename/dir/file
