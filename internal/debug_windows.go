@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -43,5 +44,5 @@ func Debug(name string, mask uint32) {
 		l = append(l, fmt.Sprintf("0x%x", unknown))
 	}
 	fmt.Fprintf(os.Stderr, "FSNOTIFY_DEBUG: %s  %2d:%-65s → %q\n",
-		time.Now().Format("15:04:05.000000000"), mask, strings.Join(l, " | "), name)
+		time.Now().Format("15:04:05.000000000"), mask, strings.Join(l, " | "), filepath.ToSlash(name))
 }

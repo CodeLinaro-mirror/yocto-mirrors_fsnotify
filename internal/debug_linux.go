@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func Debug(name string, mask uint32) {
+func Debug(name string, mask, cookie uint32) {
 	names := []struct {
 		n string
 		m uint32
@@ -17,17 +17,6 @@ func Debug(name string, mask uint32) {
 		{"IN_ACCESS", unix.IN_ACCESS},
 		{"IN_ALL_EVENTS", unix.IN_ALL_EVENTS},
 		{"IN_ATTRIB", unix.IN_ATTRIB},
-		{"IN_CLASSA_HOST", unix.IN_CLASSA_HOST},
-		{"IN_CLASSA_MAX", unix.IN_CLASSA_MAX},
-		{"IN_CLASSA_NET", unix.IN_CLASSA_NET},
-		{"IN_CLASSA_NSHIFT", unix.IN_CLASSA_NSHIFT},
-		{"IN_CLASSB_HOST", unix.IN_CLASSB_HOST},
-		{"IN_CLASSB_MAX", unix.IN_CLASSB_MAX},
-		{"IN_CLASSB_NET", unix.IN_CLASSB_NET},
-		{"IN_CLASSB_NSHIFT", unix.IN_CLASSB_NSHIFT},
-		{"IN_CLASSC_HOST", unix.IN_CLASSC_HOST},
-		{"IN_CLASSC_NET", unix.IN_CLASSC_NET},
-		{"IN_CLASSC_NSHIFT", unix.IN_CLASSC_NSHIFT},
 		{"IN_CLOSE", unix.IN_CLOSE},
 		{"IN_CLOSE_NOWRITE", unix.IN_CLOSE_NOWRITE},
 		{"IN_CLOSE_WRITE", unix.IN_CLOSE_WRITE},
@@ -38,7 +27,6 @@ func Debug(name string, mask uint32) {
 		{"IN_EXCL_UNLINK", unix.IN_EXCL_UNLINK},
 		{"IN_IGNORED", unix.IN_IGNORED},
 		{"IN_ISDIR", unix.IN_ISDIR},
-		{"IN_LOOPBACKNET", unix.IN_LOOPBACKNET},
 		{"IN_MASK_ADD", unix.IN_MASK_ADD},
 		{"IN_MASK_CREATE", unix.IN_MASK_CREATE},
 		{"IN_MODIFY", unix.IN_MODIFY},
@@ -66,6 +54,10 @@ func Debug(name string, mask uint32) {
 	if unknown > 0 {
 		l = append(l, fmt.Sprintf("0x%x", unknown))
 	}
-	fmt.Fprintf(os.Stderr, "FSNOTIFY_DEBUG: %s  %10d:%-30s → %q\n",
-		time.Now().Format("15:04:05.000000000"), mask, strings.Join(l, " | "), name)
+	var c string
+	if cookie > 0 {
+		c = fmt.Sprintf("(cookie: %d) ", cookie)
+	}
+	fmt.Fprintf(os.Stderr, "FSNOTIFY_DEBUG: %s  %10d:%-30s → %s%q\n",
+		time.Now().Format("15:04:05.000000000"), mask, strings.Join(l, " | "), c, name)
 }

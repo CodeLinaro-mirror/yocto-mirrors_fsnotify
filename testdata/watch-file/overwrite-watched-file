@@ -1,0 +1,17 @@
+# Overwrite watched file with non-watched file.
+
+touch /file
+touch /unwatch
+
+watch /file
+
+mv /unwatch /file
+
+echo asd >>/file
+rm /file
+
+Output:
+	# On inotify we just get IN_DELETE_SELF without cookie; no way to track
+	# this.
+	chmod    /file
+	remove   /file

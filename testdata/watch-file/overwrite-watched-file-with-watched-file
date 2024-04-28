@@ -1,0 +1,19 @@
+# Overwrite watched file with non-watched file.
+
+touch /file
+touch /other
+
+watch /file
+watch /other
+
+mv /other /file
+
+echo asd >>/file
+rm /file
+
+Output:
+	# On inotify we just get IN_MOVE_SELF and IN_DELETE_SELF without cookie; no
+	# way to track this.
+	chmod    /file
+	rename   /other
+	remove   /file
