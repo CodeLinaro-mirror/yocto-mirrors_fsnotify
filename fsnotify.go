@@ -76,6 +76,16 @@ const (
 	// get triggered very frequently by some software. For example, Spotlight
 	// indexing on macOS, anti-virus software, backup software, etc.
 	Chmod
+
+	// File opened for writing was closed.
+	//
+	// Only works on Linux and FreeBSD.
+	//
+	// The advantage of using this over Write is that it's more reliable than
+	// waiting for Write events to stop. It's also faster (if you're not
+	// listening to Write events): copying a file of a few GB can easily
+	// generate tens of thousands of Write events.
+	UnportableCloseWrite
 )
 
 var (
@@ -95,6 +105,8 @@ var (
 	//  - windows:      The buffer size is too small; WithBufferSize() can be used to increase it.
 	//  - kqueue, fen:  Not used.
 	ErrEventOverflow = errors.New("fsnotify: queue or buffer overflow")
+
+	ErrUnsupported = errors.New("fsnotify: not supported with this backend")
 )
 
 func (o Op) String() string {
@@ -107,6 +119,9 @@ func (o Op) String() string {
 	}
 	if o.Has(Write) {
 		b.WriteString("|WRITE")
+	}
+	if o.Has(UnportableCloseWrite) {
+		b.WriteString("|CLOSE_WRITE")
 	}
 	if o.Has(Rename) {
 		b.WriteString("|RENAME")
@@ -135,6 +150,7 @@ type (
 	addOpt   func(opt *withOpts)
 	withOpts struct {
 		bufsize int
+		op      Op
 	}
 )
 
@@ -147,6 +163,7 @@ var debug = func() bool {
 
 var defaultOpts = withOpts{
 	bufsize: 65536, // 64K
+	op:      Create | Write | Remove | Rename | Chmod,
 }
 
 func getOptions(opts ...addOpt) withOpts {
@@ -169,6 +186,18 @@ func getOptions(opts ...addOpt) withOpts {
 // [ReadDirectoryChangesW]: https://learn.microsoft.com/en-gb/windows/win32/api/winbase/nf-winbase-readdirectorychangesw
 func WithBufferSize(bytes int) addOpt {
 	return func(opt *withOpts) { opt.bufsize = bytes }
+}
+
+// WithEvents sets which events to listen for.
+//
+// Default is Create | Write | Remove | Rename | Chmod.
+//
+// Unportable events are not supported by all platforms; see the documentation
+// for details.
+//
+// Using an Unportable evnet returns an error.
+func WithEvents(op Op) addOpt {
+	return func(opt *withOpts) { opt.op = op }
 }
 
 var enableRecurse = false

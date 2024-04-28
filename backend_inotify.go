@@ -376,11 +376,30 @@ func (w *Watcher) AddWith(name string, opts ...addOpt) error {
 	}
 
 	name = filepath.Clean(name)
-	_ = getOptions(opts...)
+	with := getOptions(opts...)
+	if !w.Supports(with.op) {
+		return fmt.Errorf("%w: %s", ErrUnsupported, with.op)
+	}
 
-	var flags uint32 = unix.IN_MOVED_TO | unix.IN_MOVED_FROM |
-		unix.IN_CREATE | unix.IN_ATTRIB | unix.IN_MODIFY |
-		unix.IN_MOVE_SELF | unix.IN_DELETE | unix.IN_DELETE_SELF
+	var flags uint32
+	if with.op.Has(Create) {
+		flags |= unix.IN_CREATE
+	}
+	if with.op.Has(Write) {
+		flags |= unix.IN_MODIFY
+	}
+	if with.op.Has(Remove) {
+		flags |= unix.IN_DELETE | unix.IN_DELETE_SELF
+	}
+	if with.op.Has(Rename) {
+		flags |= unix.IN_MOVED_TO | unix.IN_MOVED_FROM | unix.IN_MOVE_SELF
+	}
+	if with.op.Has(Chmod) {
+		flags |= unix.IN_ATTRIB
+	}
+	if with.op.Has(UnportableCloseWrite) {
+		flags |= unix.IN_CLOSE_WRITE
+	}
 
 	return w.watches.updatePath(name, func(existing *watch) (*watch, error) {
 		if existing != nil {
@@ -602,6 +621,9 @@ func (w *Watcher) newEvent(name string, mask uint32) Event {
 	if mask&unix.IN_MODIFY == unix.IN_MODIFY {
 		e.Op |= Write
 	}
+	if mask&unix.IN_CLOSE_WRITE == unix.IN_CLOSE_WRITE {
+		e.Op |= UnportableCloseWrite
+	}
 	if mask&unix.IN_MOVE_SELF == unix.IN_MOVE_SELF || mask&unix.IN_MOVED_FROM == unix.IN_MOVED_FROM {
 		e.Op |= Rename
 	}
@@ -609,4 +631,9 @@ func (w *Watcher) newEvent(name string, mask uint32) Event {
 		e.Op |= Chmod
 	}
 	return e
+}
+
+// Supports reports if all listed events are supported by this watcher backend.
+func (w *Watcher) Supports(op Op) bool {
+	return true // Supports everything.
 }

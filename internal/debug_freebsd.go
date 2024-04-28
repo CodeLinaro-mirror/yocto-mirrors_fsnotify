@@ -2,6 +2,10 @@ package internal
 
 import "golang.org/x/sys/unix"
 
+const (
+	NOTE_CLOSE_WRITE = unix.NOTE_CLOSE_WRITE
+)
+
 var names = []struct {
 	n string
 	m uint32

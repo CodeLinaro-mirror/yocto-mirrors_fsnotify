@@ -458,7 +458,30 @@ func (w *Watcher) AddWith(name string, opts ...addOpt) error {
 			time.Now().Format("15:04:05.000000000"), name)
 	}
 
-	_ = getOptions(opts...)
+	with := getOptions(opts...)
+	if !w.Supports(with.op) {
+		return fmt.Errorf("%w: %s", ErrUnsupported, with.op)
+	}
+
+	var notes int
+	if with.op.Has(Create) {
+		// TODO: no way to disable this? Meh.
+	}
+	if with.op.Has(Write) {
+		notes |= unix.NOTE_WRITE
+	}
+	if with.op.Has(Remove) {
+		notes |= unix.NOTE_DELETE
+	}
+	if with.op.Has(Rename) {
+		notes |= unix.NOTE_RENAME
+	}
+	if with.op.Has(Chmod) {
+		notes |= unix.NOTE_ATTRIB
+	}
+	if with.op.Has(UnportableCloseWrite) {
+		notes |= internal.NOTE_CLOSE_WRITE
+	}
 
 	w.watches.addUserWatch(name)
 	_, err := w.addWatch(name, noteAllEvents)
@@ -755,6 +778,9 @@ func (w *Watcher) newEvent(name, linkName string, mask uint32) Event {
 	if mask&unix.NOTE_ATTRIB == unix.NOTE_ATTRIB {
 		e.Op |= Chmod
 	}
+	if internal.NOTE_CLOSE_WRITE > 0 && mask&internal.NOTE_CLOSE_WRITE == internal.NOTE_CLOSE_WRITE {
+		e.Op |= UnportableCloseWrite
+	}
 	// No point sending a write and delete event at the same time: if it's gone,
 	// then it's gone.
 	if e.Op.Has(Write) && e.Op.Has(Remove) {
@@ -858,7 +884,7 @@ func (w *Watcher) internalWatch(name string, fi os.FileInfo) (string, error) {
 	}
 
 	// watch file to mimic Linux inotify
-	return w.addWatch(name, noteAllEvents)
+	return w.addWatch(name, noteAllEvents) // XXX: remember flags from AddWith()
 }
 
 // Register events with the queue.
@@ -885,4 +911,15 @@ func (w *Watcher) read(events []unix.Kevent_t) ([]unix.Kevent_t, error) {
 		return nil, err
 	}
 	return events[0:n], nil
+}
+
+// Supports reports if all listed events are supported by this watcher backend.
+func (w *Watcher) Supports(op Op) bool {
+	if runtime.GOOS == "freebsd" {
+		return true // Supports everything.
+	}
+	if op.Has(UnportableCloseWrite) {
+		return false
+	}
+	return true
 }

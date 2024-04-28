@@ -269,7 +269,10 @@ func (w *Watcher) AddWith(name string, opts ...addOpt) error {
 			time.Now().Format("15:04:05.000000000"), name)
 	}
 
-	_ = getOptions(opts...)
+	with := getOptions(opts...)
+	if !w.Supports(with.op) {
+		return fmt.Errorf("%w: %s", ErrUnsupported, with.op)
+	}
 
 	// Currently we resolve symlinks that were explicitly requested to be
 	// watched. Otherwise we would use LStat here.
@@ -638,4 +641,12 @@ func (w *Watcher) WatchList() []string {
 	}
 
 	return entries
+}
+
+// Supports reports if all listed events are supported by this watcher backend.
+func (w *Watcher) Supports(op Op) bool {
+	if op.Has(UnportableCloseWrite) {
+		return false
+	}
+	return true
 }

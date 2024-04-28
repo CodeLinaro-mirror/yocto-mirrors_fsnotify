@@ -591,11 +591,6 @@ func indent(s fmt.Stringer) string {
 
 var join = filepath.Join
 
-func isCI() bool {
-	_, ok := os.LookupEnv("CI")
-	return ok
-}
-
 func isKqueue() bool {
 	switch runtime.GOOS {
 	case "darwin", "freebsd", "openbsd", "netbsd", "dragonfly":

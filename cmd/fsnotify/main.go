@@ -19,6 +19,7 @@ Commands:
     watch [paths]  Watch the paths for changes and print the events.
     file  [file]   Watch a single file for changes.
     dedup [paths]  Watch the paths for changes, suppressing duplicate events.
+    cw    [paths]  CloseWrite example.
 `[1:]
 
 func exit(format string, a ...interface{}) {
@@ -61,5 +62,7 @@ func main() {
 		file(args...)
 	case "dedup":
 		dedup(args...)
+	case "cw":
+		closeWrite(args...)
 	}
 }

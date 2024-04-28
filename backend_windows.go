@@ -279,6 +279,9 @@ func (w *Watcher) AddWith(name string, opts ...addOpt) error {
 	}
 
 	with := getOptions(opts...)
+	if !w.Supports(with.op) {
+		return fmt.Errorf("%w: %s", ErrUnsupported, with.op)
+	}
 	if with.bufsize < 4096 {
 		return fmt.Errorf("fsnotify.WithBufferSize: buffer size cannot be smaller than 4096 bytes")
 	}
@@ -839,4 +842,12 @@ func (w *Watcher) toFSnotifyFlags(action uint32) uint64 {
 		return sysFSMOVEDTO
 	}
 	return 0
+}
+
+// Supports reports if all listed events are supported by this watcher backend.
+func (w *Watcher) Supports(op Op) bool {
+	if op.Has(UnportableCloseWrite) {
+		return false
+	}
+	return true
 }
