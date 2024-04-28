@@ -188,15 +188,17 @@ func WithBufferSize(bytes int) addOpt {
 	return func(opt *withOpts) { opt.bufsize = bytes }
 }
 
-// WithEvents sets which events to listen for.
+// WithOps sets which operations to listen for.
+//
+// Excluding operations can save quite a bit of CPU time.
 //
 // Default is Create | Write | Remove | Rename | Chmod.
 //
-// Unportable events are not supported by all platforms; see the documentation
-// for details.
+// This can also be used to add unportable operations not supported by all
+// platforms.
 //
-// Using an Unportable evnet returns an error.
-func WithEvents(op Op) addOpt {
+// Using an unsupported operation returns an error.
+func WithOps(op Op) addOpt {
 	return func(opt *withOpts) { opt.op = op }
 }
 

@@ -537,6 +537,8 @@ func newEvents(t *testing.T, s string) Events {
 					op |= Rename
 				case "CHMOD":
 					op |= Chmod
+				case "CLOSE_WRITE":
+					op |= UnportableCloseWrite
 				default:
 					t.Fatalf("newEvents: line %d has unknown event %q: %s", no, ee, line)
 				}
@@ -711,6 +713,10 @@ func parseScript(t *testing.T, in string) {
 		case "skip", "require":
 			mustArg(c, 1)
 			switch c.args[0] {
+			case "close_write":
+				if runtime.GOOS != "linux" && runtime.GOOS != "freebsd" {
+					t.Skip("No CloseWrite on this platform")
+				}
 			case "always":
 				t.Skip()
 			case "symlink":
@@ -748,8 +754,43 @@ func parseScript(t *testing.T, in string) {
 				t.Fatalf("line %d: unknown %s reason: %q", c.line, c.cmd, c.args[0])
 			}
 		case "watch":
-			mustArg(c, 1)
-			do = append(do, func() { addWatch(t, w.w, tmppath(tmp, c.args[0])) })
+			if len(c.args) < 1 {
+				t.Fatalf("line %d: %q requires at least %d arguments (have %d: %q)",
+					c.line, c.cmd, 1, len(c.args), c.args)
+			}
+			if len(c.args) == 1 {
+				do = append(do, func() { addWatch(t, w.w, tmppath(tmp, c.args[0])) })
+				continue
+			}
+			var op Op
+			for _, o := range c.args[1:] {
+				switch strings.ToLower(o) {
+				default:
+					t.Fatalf("line %d: unknown: %q", c.line+1, o)
+				case "default":
+					op |= Create | Write | Remove | Rename | Chmod
+				case "create":
+					op |= Create
+				case "write":
+					op |= Write
+				case "remove":
+					op |= Remove
+				case "rename":
+					op |= Rename
+				case "chmod":
+					op |= Chmod
+				case "close_write":
+					op |= UnportableCloseWrite
+				}
+
+			}
+			do = append(do, func() {
+				p := tmppath(tmp, c.args[0])
+				err := w.w.AddWith(p, WithOps(op))
+				if err != nil {
+					t.Fatalf("line %d: addWatch(%q): %s", c.line+1, p, err)
+				}
+			})
 		case "unwatch":
 			mustArg(c, 1)
 			do = append(do, func() { rmWatch(t, w.w, tmppath(tmp, c.args[0])) })

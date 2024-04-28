@@ -643,7 +643,10 @@ func (w *Watcher) WatchList() []string {
 	return entries
 }
 
-// Supports reports if all listed events are supported by this watcher backend.
+// Supports reports if all the listed operations are supported by this platform.
+//
+// Create, Write, Remove, Rename, and Chmod are always supported. It can only
+// return false for an Op starting with Unportable.
 func (w *Watcher) Supports(op Op) bool {
 	if op.Has(UnportableCloseWrite) {
 		return false

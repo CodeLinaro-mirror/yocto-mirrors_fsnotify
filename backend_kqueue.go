@@ -465,7 +465,7 @@ func (w *Watcher) AddWith(name string, opts ...addOpt) error {
 
 	var notes int
 	if with.op.Has(Create) {
-		// TODO: no way to disable this? Meh.
+		// TODO: need to disable on dir scanning.
 	}
 	if with.op.Has(Write) {
 		notes |= unix.NOTE_WRITE
@@ -913,7 +913,10 @@ func (w *Watcher) read(events []unix.Kevent_t) ([]unix.Kevent_t, error) {
 	return events[0:n], nil
 }
 
-// Supports reports if all listed events are supported by this watcher backend.
+// Supports reports if all the listed operations are supported by this platform.
+//
+// Create, Write, Remove, Rename, and Chmod are always supported. It can only
+// return false for an Op starting with Unportable.
 func (w *Watcher) Supports(op Op) bool {
 	if runtime.GOOS == "freebsd" {
 		return true // Supports everything.

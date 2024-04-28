@@ -32,7 +32,7 @@ func closeWrite(paths ...string) {
 	go closeWriteLoop(w, cw)
 
 	for _, p := range paths {
-		err := w.AddWith(p, fsnotify.WithEvents(op))
+		err := w.AddWith(p, fsnotify.WithOps(op))
 		if err != nil {
 			exit("%q: %s", p, err)
 		}
